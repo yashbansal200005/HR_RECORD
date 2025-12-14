@@ -1,24 +1,21 @@
 # Build stage
 FROM node:18-alpine AS builder
 
-WORKDIR /app/backend
+# Copy backend directory entirely
+COPY backend /app
 
-# Copy backend package files
-COPY backend/package*.json ./
+WORKDIR /app
 
 # Install dependencies
 RUN npm install --production
 
-# Copy backend source
-COPY backend/ ./
-
 # Production stage
 FROM node:18-alpine
 
-WORKDIR /app/backend
+WORKDIR /app
 
-# Copy installed dependencies and backend from builder
-COPY --from=builder /app/backend ./
+# Copy everything from builder
+COPY --from=builder /app .
 
 # Set environment variables
 ENV NODE_ENV=production
