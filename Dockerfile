@@ -1,26 +1,24 @@
 # Build stage
 FROM node:18-alpine AS builder
 
-WORKDIR /app
+WORKDIR /app/backend
 
 # Copy backend package files
-COPY backend/package*.json ./backend/
+COPY backend/package*.json ./
 
 # Install dependencies
-RUN cd backend && npm install --production
+RUN npm install --production
 
 # Copy backend source
-COPY backend/ ./backend/
+COPY backend/ ./
 
 # Production stage
 FROM node:18-alpine
 
-WORKDIR /app
-
-# Copy installed node_modules and backend from builder
-COPY --from=builder /app/backend ./backend
-
 WORKDIR /app/backend
+
+# Copy installed dependencies and backend from builder
+COPY --from=builder /app/backend ./
 
 # Set environment variables
 ENV NODE_ENV=production
@@ -31,7 +29,7 @@ EXPOSE 5000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:5000/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+  CMD node -e "require('http').get('http://localhost:5000/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})" || exit 1
 
 # Start the server
 CMD ["npm", "start"]
